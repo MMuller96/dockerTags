@@ -6,9 +6,12 @@ use App\Entity\Image;
 use App\Entity\Tag;
 use App\Repository\ImageRepository;
 use App\Repository\TagRepository;
-use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
+use Symfony\Component\HttpClient\Exception\ClientException;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Throwable;
 
 class DockerHubService
 {
@@ -19,10 +22,18 @@ class DockerHubService
         private EntityManagerInterface $em
     ){ }
 
-    public function load(string $namespace, string $repository)
+    public function load(string $namespace, string $repository): bool
     {
+        $response = null;
+        $data = null;
+
         $response = $this->httpClient->request('GET', str_replace(['{namespace}', '{repository}'], [$namespace, $repository], self::URL));
-        $data = $response->toArray();
+
+        if (200 !== $response->getStatusCode()) {
+            return false;
+        }
+
+        if($response)$data = $response->toArray();
 
         if($data)
         {
@@ -89,6 +100,8 @@ class DockerHubService
 
             $this->removeObsoleteTags($namespace . '/' . $repository, $currentTags);
         }
+
+        return true;
     }
 
     private function removeObsoleteTags(string $name, array $currentTags)

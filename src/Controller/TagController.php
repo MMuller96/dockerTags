@@ -29,11 +29,12 @@ class TagController extends AbstractController
 
         if(!$tags)
         {
-            $this->dockerHubService->load($namespace, $repository);
+            if(!$this->dockerHubService->load($namespace, $repository)) return new Response('', 404);
             $tags = $tagRepo->findBy(['name' => $namespace . '/' . $repository]);
         }
 
-        return new JsonResponse($tags);
+        if(!$tags) return new Response('', 404);
+        else return new JsonResponse($tags);
     }
 
     #[Route('/tag/{namespace}/{repository}/{tag_name}', name: 'get_tag')]
@@ -41,14 +42,15 @@ class TagController extends AbstractController
     {   
         /** @var TagRepository */
         $tagRepo = $this->em->getRepository(Tag::class);
-        $tags = $tagRepo->findOneBy(['name' => $namespace . '/' . $repository, 'tag_name' => $tag_name]);
+        $tag = $tagRepo->findOneBy(['name' => $namespace . '/' . $repository, 'tag_name' => $tag_name]);
 
-        if(!$tags)
+        if(!$tag)
         {
-            $this->dockerHubService->load($namespace, $repository);
-            $tags = $tagRepo->findBy(['name' => $namespace . '/' . $repository]);
+            if(!$this->dockerHubService->load($namespace, $repository)) return new Response('', 404);
+            $tag = $tagRepo->findOneBy(['name' => $namespace . '/' . $repository, 'tag_name' => $tag_name]);
         }
 
-        return new JsonResponse($tags);
+        if(!$tag) return new Response('', 404);
+        else return new JsonResponse($tag);
     }
 }
