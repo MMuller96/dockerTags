@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Tag;
 use App\Repository\TagRepository;
 use App\Service\DockerHubService;
+use App\Service\SearchLogService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,7 +16,8 @@ class TagController extends AbstractController
 {
     public function __construct(
         private DockerHubService $dockerHubService,
-        private EntityManagerInterface $em) 
+        private EntityManagerInterface $em,
+        private SearchLogService $searchLogService) 
     {
         
     }
@@ -33,8 +35,12 @@ class TagController extends AbstractController
             $tags = $tagRepo->findBy(['name' => $namespace . '/' . $repository]);
         }
 
-        if(!$tags) return new Response('', 404);
-        else return new JsonResponse($tags);
+        if(!$tags) return new Response('', 204);
+        else 
+        {
+            $this->searchLogService->add($namespace, $repository);
+            return new JsonResponse($tags);
+        }
     }
 
     #[Route('/tag/{namespace}/{repository}/{tag_name}', name: 'get_tag')]
@@ -50,7 +56,11 @@ class TagController extends AbstractController
             $tag = $tagRepo->findOneBy(['name' => $namespace . '/' . $repository, 'tag_name' => $tag_name]);
         }
 
-        if(!$tag) return new Response('', 404);
-        else return new JsonResponse($tag);
+        if(!$tag) return new Response('', 204);
+        else 
+        {
+            $this->searchLogService->add($namespace, $repository, $tag_name);
+            return new JsonResponse($tag);
+        }
     }
 }
