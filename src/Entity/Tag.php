@@ -2,6 +2,9 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use App\Controller\TagController;
 use App\Repository\TagRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -10,6 +13,16 @@ use Doctrine\ORM\Mapping as ORM;
 use JsonSerializable;
 
 #[ORM\Entity(repositoryClass: TagRepository::class)]
+#[ApiResource(operations: [
+    new Get(
+        name: 'get_tags', 
+        uriTemplate: '/tag/{namespace}/{repository}', 
+        controller: TagController::class),
+    new Get(
+        name: 'get_tag', 
+        uriTemplate: '/tag/{namespace}/{repository}/{tag_name}', 
+        controller: TagController::class),
+])]
 class Tag implements JsonSerializable
 {
     #[ORM\Id]
